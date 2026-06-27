@@ -1,0 +1,12 @@
+# One symbol per line (NSE ticker, no suffix)
+# Example subset — replace with full Nifty 200 list from NSE
+RELIANCE
+TCS
+HDFCBANK
+INFY
+ICICIBANK
+HINDUNILVR
+ITC
+SBIN
+BHARTIARTL
+KOTAKBANK
