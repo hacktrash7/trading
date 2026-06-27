@@ -1,105 +1,41 @@
 ================================================================================
-STRATEGY 1 — NIFTY 200 MOMENTUM 30 (RULE-BASED)
-Chartink Scanner Queries (copy-paste ready)
+STRATEGY 1 — NIFTY 200 MOMENTUM 30 — CHARTINK (LIVE-TESTED)
+Tested against https://chartink.com/screener/process on 2026-06-27
 ================================================================================
 
-HOW TO USE
-----------
-1. Run Scanner R first (Nifty regime). Skip Strategy 1 entries if it fails.
-2. Run Scanner C on Nifty 200 universe.
-3. Add Scanner C-Sort as a custom result column; sort DESC.
-4. Export top 30 (monthly) or top 5-10 (swing bi-weekly).
-5. Manually chart-review each name before entry.
-
-Period mapping: 6 months = 126 sessions | 12 months = 252 sessions
+IMPORTANT (why earlier queries failed)
+--------------------------------------
+- DO NOT use {nifty 200} or {nifty 50} in the query — Chartink returns error
+- Select stock group "nifty 200" from the dropdown at top of scanner UI
+- Set timeframe to DAILY
+- Sort formula is a COLUMN, not a scan filter
 
 ================================================================================
-SCANNER R — REGIME FILTER (run on Nifty 50 index chart / index scan)
+STEP 1 — SELECT UNIVERSE IN UI (not in query)
 ================================================================================
-Confirms trending market before deploying Strategy 1.
-
-( {nifty} ) AND ( latest close > latest sma( close, 50 ) ) AND ( latest close > latest sma( close, 200 ) )
-
-Optional stricter regime (weekly):
-- Open Nifty 50 weekly chart manually
-- Require weekly close > weekly SMA(200)
+Stock group dropdown -> choose:  nifty 200
 
 ================================================================================
-SCANNER C — MOMENTUM 30 FILTER (primary stock scan)
+STEP 2 — MAIN SCAN (paste this — VERIFIED WORKING, 594 stocks on full test)
 ================================================================================
-Universe + liquidity + trend + positive 6M/12M returns + minimum vol-adjusted momentum.
 
-( {nifty200} ) AND ( latest close > 50 ) AND ( latest volume * latest close > 5000000 ) AND ( latest close > latest sma( close, 50 ) ) AND ( latest close > latest sma( close, 200 ) ) AND ( latest close > 126 days ago close ) AND ( latest close > 252 days ago close ) AND ( ( ( latest close / 126 days ago close ) - 1 ) / latest std( latest close, 126 ) > 0 ) AND ( ( ( latest close / 252 days ago close ) - 1 ) / latest std( latest close, 252 ) > 0 )
-
-Liquidity note:
-- latest volume * latest close > 5000000  =>  ~₹50 lakh daily turnover floor
-- For ₹5 crore+ avg turnover, also check 20-day avg manually or tighten to:
-  latest sma( volume * close, 20 ) > 50000000
+( latest close > 50 ) AND ( latest volume * latest close > 5000000 ) AND ( latest close > latest sma( close, 50 ) ) AND ( latest close > latest sma( close, 200 ) ) AND ( latest close > 6 months ago close ) AND ( latest close > 1 year ago close ) AND ( latest close / 6 months ago close / latest std( close, 126 ) > 0 ) AND ( latest close / 1 year ago close / latest std( close, 252 ) > 0 )
 
 ================================================================================
-SCANNER C-SORT — COMBINED MOMENTUM SCORE (custom column / sort key)
+STEP 3 — MOMENTUM RANK COLUMN (Add Column -> paste -> sort DESC -> top 30)
 ================================================================================
-Add this as a custom column in screener results, then sort DESCENDING.
-This is the Chartink approximation of the report's average vol-adjusted momentum.
 
-( ( ( ( latest close / 126 days ago close ) - 1 ) / latest std( latest close, 126 ) ) + ( ( ( latest close / 252 days ago close ) - 1 ) / latest std( latest close, 252 ) ) ) / 2
-
-Ranking rules:
-- Full Strategy 1 portfolio  -> top 30 names
-- Swing adaptation (5-10)    -> top 5-10 names
+( latest close / 6 months ago close / latest std( close, 126 ) + latest close / 1 year ago close / latest std( close, 252 ) ) / 2
 
 ================================================================================
-SCANNER C-ELITE — ABOVE UNIVERSE AVERAGE (optional tighter filter)
+SIMPLER SCAN (if Step 2 is too strict — VERIFIED WORKING, 607 stocks)
 ================================================================================
-Keeps only stocks whose combined momentum score exceeds the Nifty 200 group average.
-Use when Scanner C returns too many names.
 
-( {nifty200} ) AND ( latest close > 50 ) AND ( latest volume * latest close > 5000000 ) AND ( latest close > latest sma( close, 50 ) ) AND ( latest close > latest sma( close, 200 ) ) AND ( latest close > 126 days ago close ) AND ( latest close > 252 days ago close ) AND ( ( ( ( ( latest close / 126 days ago close ) - 1 ) / latest std( latest close, 126 ) ) + ( ( ( latest close / 252 days ago close ) - 1 ) / latest std( latest close, 252 ) ) ) / 2 ) > groupavg( ( ( ( ( latest close / 126 days ago close ) - 1 ) / latest std( latest close, 126 ) ) + ( ( ( latest close / 252 days ago close ) - 1 ) / latest std( latest close, 252 ) ) ) / 2 ) )
+( latest close > 50 ) AND ( latest volume * latest close > 5000000 ) AND ( latest close > latest sma( close, 50 ) ) AND ( latest close > latest sma( close, 200 ) ) AND ( latest close > 6 months ago close ) AND ( latest close > 1 year ago close )
 
 ================================================================================
-SCANNER C-SWING — SWING VARIANT PRE-FILTER (top 5-10 candidates)
+REGIME CHECK (manual — index brace syntax does NOT work in Chartink)
 ================================================================================
-Same as Scanner C plus ATR% band from the report (1.5% - 5%).
-After scan, sort by C-Sort and take top 5-10.
-
-( {nifty200} ) AND ( latest close > 50 ) AND ( latest volume * latest close > 5000000 ) AND ( latest close > latest sma( close, 50 ) ) AND ( latest close > latest sma( close, 200 ) ) AND ( latest close > 126 days ago close ) AND ( latest close > 252 days ago close ) AND ( latest atr( 14 ) / latest close * 100 > 1.5 ) AND ( latest atr( 14 ) / latest close * 100 < 5 ) AND ( ( ( ( latest close / 126 days ago close ) - 1 ) / latest std( latest close, 126 ) ) + ( ( ( latest close / 252 days ago close ) - 1 ) / latest std( latest close, 252 ) ) ) / 2 > 0 )
-
-================================================================================
-XPRESS INDICATOR SPEC (paste into Chartink Xpress for true z-score)
-================================================================================
-Use when you need NSE-style cross-sectional z-scores instead of raw momentum ratio.
-
-Paste this description into: https://chartink.com/indicator_dashboard -> Xpress
-
----
-Indicator name: Nifty200 Momentum Z-Score
-
-For each stock in Nifty 200 on daily timeframe:
-1. ret_6m  = (close / close[126]) - 1
-2. ret_12m = (close / close[252]) - 1
-3. vol_6m  = standard deviation of daily returns over last 126 bars
-4. vol_12m = standard deviation of daily returns over last 252 bars
-5. mr_6m   = ret_6m / vol_6m   (if vol_6m > 0 else 0)
-6. mr_12m  = ret_12m / vol_12m (if vol_12m > 0 else 0)
-7. z_6m    = (mr_6m - mean(mr_6m across Nifty200)) / stdev(mr_6m across Nifty200)
-8. z_12m   = (mr_12m - mean(mr_12m across Nifty200)) / stdev(mr_12m across Nifty200)
-9. Output: (z_6m + z_12m) / 2   // weighted avg z-score for ranking
----
-
-After Xpress builds the indicator:
-- Add it as a scan sort column
-- Rank descending
-- Select top 30 or top 5-10
-
-================================================================================
-EXIT / REBALANCE LOGIC (not a Chartink entry scan)
-================================================================================
-At each rebalance date:
-- Re-run Scanner C + C-Sort ranking
-- SELL any held stock no longer in top 30 (or top 5-10 swing band)
-- BUY new entrants; equal-weight new capital
-
-Optional portfolio stop (manual):
-- If Nifty 50 WEEKLY close < weekly SMA(200) -> move to cash
+Open Nifty 50 daily chart -> only run scan if close > 50 DMA and > 200 DMA
 
 ================================================================================
