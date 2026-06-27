@@ -1,0 +1,64 @@
+================================================================================
+BREAKOUT SCAN — 1-2 DAYS AGO OR NEAR BREAKOUT (anti false-breakout)
+Live-tested on Chartink API — 2026-06-27
+================================================================================
+
+UNIVERSE (pick one in Chartink UI segment dropdown)
+---------------------------------------------------
+- nifty 500  (recommended for breakouts)  ->  ID {57960}
+- nifty 200  (tighter large/mid cap)      ->  ID {46553}
+
+================================================================================
+SCAN A — STANDARD (recommended) — ~43 stocks on Nifty 500 when tested
+================================================================================
+
+( {57960} ( latest close > 50 and latest volume * latest close > 5000000 and latest close > latest sma( close, 50 ) and latest close > latest sma( close, 200 ) and latest sma( close, 50 ) > latest sma( close, 200 ) and ( ( 1 day ago high > 1 weeks ago max( 52, high ) and 2 days ago high <= 2 weeks ago max( 52, high ) ) or ( 2 days ago high > 2 weeks ago max( 52, high ) and 3 days ago high <= 3 weeks ago max( 52, high ) ) or ( latest close > latest max( 52, high ) * 0.97 and latest close < latest max( 52, high ) ) ) and latest close > 1 day ago low and latest close >= 1 day ago close * 0.98 and latest low > latest max( 52, high ) * 0.95 and latest close > latest sma( close, 20 ) ) )
+
+For Nifty 200 replace {57960} with {46553}
+
+================================================================================
+SCAN B — STRICT (extra volume filter, fewer false breakouts) — ~12 stocks
+================================================================================
+
+Add this line before the last closing brackets of Scan A:
+
+and ( 1 day ago volume > 1.5 * 1 day ago sma( volume, 50 ) or 2 days ago volume > 1.5 * 2 days ago sma( volume, 50 ) or latest volume > 1.5 * latest sma( volume, 50 ) )
+
+================================================================================
+WHAT EACH BLOCK DOES
+================================================================================
+
+BREAKOUT 1 DAY AGO:
+  1 day ago high > 1 weeks ago max( 52, high )
+  2 days ago high <= 2 weeks ago max( 52, high )
+
+BREAKOUT 2 DAYS AGO:
+  2 days ago high > 2 weeks ago max( 52, high )
+  3 days ago high <= 3 weeks ago max( 52, high )
+
+NEAR BREAKOUT (within 3% of 52-week high, not yet broken):
+  latest close > latest max( 52, high ) * 0.97
+  latest close < latest max( 52, high )
+
+ANTI FALSE-BREAKOUT:
+  latest close > 1 day ago low              -> no sharp reversal candle
+  latest close >= 1 day ago close * 0.98    -> still holding / not giving back gains
+  latest low > latest max( 52, high ) * 0.95 -> price not fallen back into base
+  latest close > latest sma( close, 20 )    -> short-term trend intact
+  latest sma( close, 50 ) > sma( 200 )      -> Stage 2 uptrend (Weinstein)
+
+OPTIONAL STRICT VOLUME (Scan B):
+  breakout day volume > 1.5x 50-day avg volume
+
+================================================================================
+MANUAL CHART CHECK (still required)
+================================================================================
+1. Base was tight 3-8 weeks before breakout
+2. Breakout candle had visible volume spike on chart
+3. No earnings/results within 5 trading days
+4. India VIX < 20 preferred
+5. Nifty 50 above 50-DMA (regime filter)
+
+SKIP if: wide loose base, gap-down after breakout, volume dried up for 2+ days
+
+================================================================================
