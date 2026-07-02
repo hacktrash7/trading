@@ -1,0 +1,5 @@
+Date,Description,Category,Amount (INR),Type,Notes
+2026-07-01,Example: DMart groceries,Groceries,1500,Debit,Weekly grocery run
+2026-07-01,Example: Metro commute,Transport (Metro),20,Debit,Office commute
+2026-07-05,Example: Zerodha SIP,Investments (Zerodha),10000,Debit,Monthly investment
+2026-07-30,Example: Salary,Income,158853,Credit,Monthly salary
