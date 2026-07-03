@@ -2,9 +2,12 @@
 """
 Categorize ICICI/UPI bank transactions and summarize spending by category.
 
-Usage:
-  python categorize_transactions.py statement.csv
-  python categorize_transactions.py statement.csv --month 2026-07
+Usage (macOS — use python3, NOT python):
+  python3 budget-tracker/categorize_transactions.py your_statement.csv
+  ./budget-tracker/run_categorizer.sh your_statement.csv
+
+From the repo root (trading-cursor-monthly-budget-tracker-bd1b):
+  cd budget-tracker && python3 categorize_transactions.py ../your_statement.csv
 
 CSV should have columns for description and amount (header names are flexible).
 """
@@ -67,7 +70,7 @@ def categorize(description: str) -> str:
     return "Misc / buffer"
 
 
-def parse_amount(raw: str) -> float | None:
+def parse_amount(raw: str):
     cleaned = re.sub(r"[₹,\s]", "", str(raw))
     try:
         return float(cleaned)
@@ -75,7 +78,7 @@ def parse_amount(raw: str) -> float | None:
         return None
 
 
-def find_columns(row: dict) -> tuple[str | None, str | None, str | None]:
+def find_columns(row):
     keys = {k.lower().strip(): k for k in row}
     desc_key = next((keys[k] for k in keys if "remark" in k or "description" in k or "narration" in k or "particular" in k), None)
     amt_key = next((keys[k] for k in keys if "withdrawal" in k or "debit" in k or "amount" in k), None)
@@ -85,7 +88,7 @@ def find_columns(row: dict) -> tuple[str | None, str | None, str | None]:
     return date_key, desc_key, amt_key
 
 
-def load_transactions(path: Path) -> list[dict]:
+def load_transactions(path):
     rows = []
     with path.open(newline="", encoding="utf-8-sig") as f:
         reader = csv.DictReader(f)
@@ -104,7 +107,7 @@ def load_transactions(path: Path) -> list[dict]:
     return rows
 
 
-def print_summary(transactions: list[dict]) -> None:
+def print_summary(transactions):
     totals = defaultdict(float)
     for t in transactions:
         if t["category"] != "Income":
@@ -135,7 +138,13 @@ def main():
     args = parser.parse_args()
 
     if not args.csv_file.exists():
-        raise SystemExit(f"File not found: {args.csv_file}")
+        raise SystemExit(
+            "File not found: {}\n\n"
+            "Tips:\n"
+            "  • Use the full path to your CSV, e.g. ~/Downloads/statement.csv\n"
+            "  • From repo root: python3 budget-tracker/categorize_transactions.py your_statement.csv\n"
+            "  • On Mac, use python3 (not python — system python is 2.7)".format(args.csv_file)
+        )
 
     txns = load_transactions(args.csv_file)
     if args.month:
