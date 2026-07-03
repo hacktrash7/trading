@@ -55,7 +55,7 @@ TARGETS = {
     "Transport (Metro)": 200,
     "Software subscriptions": 1500,
     "Other subscriptions": 200,
-    "Healthcare": 1500,
+    "Healthcare": 200,
     "Education / training": 0,
     "Shopping (Amazon etc.)": 1000,
     "Gift cards": 0,
