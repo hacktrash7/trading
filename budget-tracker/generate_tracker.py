@@ -6,26 +6,31 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 
-# Budget categories with June 2026 actuals and recommended targets
+# Budget categories with June 2026 actuals and updated monthly targets
+SALARY = 158853
+PLUXEE_GROCERIES = 5600  # ₹4,400 + ₹1,200 corporate meal/grocery benefit
+ZERODHA_TARGET = 120000
+
 BUDGET_CATEGORIES = [
-    ("Investments (Zerodha)", 71000, 55000, "Fixed monthly SIP; adjust based on liquidity needs"),
-    ("Family transfers", 18060, 18060, "Fixed obligation — budget as non-negotiable"),
-    ("Credit card payment", 13180, 8000, "Audit CC statement monthly; pay via UPI when possible"),
-    ("Groceries", 2178, 2000, "DMart/BigBasket bulk orders"),
-    ("Restaurant dining", 5253, 3000, "Max 2–3 sit-down meals per month"),
-    ("Street food / canteen", 3594, 2500, "Office lunch alternatives"),
-    ("Desserts (Polar Bear etc.)", 924, 300, "Max 1–2 visits per month"),
-    ("Office snacks / tea", 750, 300, "Carry flask; use Infosys cafeteria"),
+    ("Investments (Zerodha)", 71000, ZERODHA_TARGET, "Transfer ₹1.2L to Zerodha on 1st–2nd of month"),
+    ("Family transfers", 18060, 18000, "Fixed obligation — budget as non-negotiable"),
+    ("Credit card payment", 13180, 0, "No CC bills — pay everything via UPI/debit"),
+    ("Pluxee — groceries (benefit)", 0, PLUXEE_GROCERIES, "₹4,400 + ₹1,200 loaded monthly; DMart/BigBasket only"),
+    ("Groceries (from salary)", 2178, 0, "Use Pluxee first; salary only if Pluxee exhausted"),
+    ("Restaurant dining", 5253, 2500, "Max 2 sit-down meals per month"),
+    ("Street food / canteen", 3594, 2500, "Office lunch — use Infosys cafeteria when possible"),
+    ("Desserts (Polar Bear etc.)", 924, 300, "Max 1 visit per month"),
+    ("Office snacks / tea", 750, 300, "Carry flask; avoid daily ₹35 UPI"),
     ("Office cafe (Cowrks)", 598, 200, "Use only when necessary"),
     ("Transport (Metro)", 180, 200, "Already optimal"),
     ("Software subscriptions", 2376, 1500, "Cursor AI — review tier / annual plan"),
     ("Other subscriptions", 2, 200, "YouTube, streaming, etc."),
-    ("Healthcare", 2290, 2500, "Variable; claim via corporate insurance"),
-    ("Education / training", 1875, 2000, "Skill-building — keep if ROI-positive"),
-    ("Shopping (Amazon etc.)", 1842, 1000, "Non-gift discretionary purchases"),
+    ("Healthcare", 2290, 1500, "Variable; claim via corporate insurance"),
+    ("Education / training", 1875, 0, "Only if actively enrolled in a course"),
+    ("Shopping (Amazon etc.)", 1842, 1000, "Non-essential purchases only"),
     ("Gift cards", 4240, 0, "Avoid prepaid unless planned gift"),
-    ("Luxury / big purchases", 30867, 2500, "Sinking fund: max ₹2,500/month accrual"),
-    ("Misc / buffer", 0, 2000, "Unexpected expenses"),
+    ("Luxury / big purchases", 30867, 0, "No luxury spend — use 7-day rule if > ₹5,000"),
+    ("Misc / buffer", 0, 2000, "Unexpected expenses from salary"),
 ]
 
 JUNE_TRANSACTIONS = [
@@ -59,7 +64,15 @@ THIN_BORDER = Border(
     bottom=Side(style="thin"),
 )
 
-CATEGORIES = [c[0] for c in BUDGET_CATEGORIES] + ["Income", "Misc / buffer"]
+CATEGORIES = [c[0] for c in BUDGET_CATEGORIES] + ["Income", "Pluxee — groceries (benefit)", "Misc / buffer"]
+
+# Salary-side spend targets (excludes Pluxee benefit)
+SALARY_LIVING_TARGET = sum(
+    target for cat, _, target, _ in BUDGET_CATEGORIES
+    if cat not in ("Investments (Zerodha)", "Pluxee — groceries (benefit)", "Groceries (from salary)")
+)
+SALARY_OUTFLOW_TARGET = ZERODHA_TARGET + SALARY_LIVING_TARGET
+SALARY_SURPLUS_TARGET = SALARY - SALARY_OUTFLOW_TARGET
 
 
 def style_header(ws, row, cols):
@@ -109,12 +122,18 @@ def build_budget_sheet(wb):
     ws.cell(row=total_row, column=5, value=f"=D{total_row}-C{total_row}").number_format = '#,##0'
 
     summary_row = total_row + 2
-    ws.cell(row=summary_row, column=1, value="Monthly salary (target income)").font = Font(bold=True)
-    ws.cell(row=summary_row, column=3, value=158853).number_format = '#,##0'
-    ws.cell(row=summary_row + 1, column=1, value="Projected surplus (Income − Actual spend)").font = Font(bold=True)
-    ws.cell(row=summary_row + 1, column=4, value=f"=C{summary_row}-D{total_row}").number_format = '#,##0'
-    ws.cell(row=summary_row + 2, column=1, value="Savings rate (%)").font = Font(bold=True)
-    ws.cell(row=summary_row + 2, column=4, value=f"=IF(C{summary_row}>0,D{summary_row + 1}/C{summary_row},0)").number_format = '0.0%'
+    ws.cell(row=summary_row, column=1, value="Monthly salary (bank)").font = Font(bold=True)
+    ws.cell(row=summary_row, column=3, value=SALARY).number_format = '#,##0'
+    ws.cell(row=summary_row + 1, column=1, value="Pluxee grocery benefit (separate)").font = Font(bold=True)
+    ws.cell(row=summary_row + 1, column=3, value=PLUXEE_GROCERIES).number_format = '#,##0'
+    ws.cell(row=summary_row + 2, column=1, value="Zerodha investment target").font = Font(bold=True)
+    ws.cell(row=summary_row + 2, column=3, value=ZERODHA_TARGET).number_format = '#,##0'
+    ws.cell(row=summary_row + 3, column=1, value="Living spend from salary (target)").font = Font(bold=True)
+    ws.cell(row=summary_row + 3, column=3, value=SALARY_LIVING_TARGET).number_format = '#,##0'
+    ws.cell(row=summary_row + 4, column=1, value="Projected salary surplus (Salary − Actual spend)").font = Font(bold=True)
+    ws.cell(row=summary_row + 4, column=4, value=f"=C{summary_row}-D{total_row}").number_format = '#,##0'
+    ws.cell(row=summary_row + 5, column=1, value="Total to Zerodha + surplus wealth").font = Font(bold=True)
+    ws.cell(row=summary_row + 5, column=3, value=f"=C{summary_row + 2}+C{summary_row + 4}").number_format = '#,##0'
 
     ws.freeze_panes = "A2"
     auto_width(ws, 7)
@@ -159,31 +178,84 @@ def build_baseline_sheet(wb):
 
 def build_dashboard_sheet(wb):
     ws = wb.create_sheet("Dashboard")
-    ws["A1"] = "Monthly Budget Dashboard"
+    ws["A1"] = "Monthly Budget Dashboard — Updated Plan"
     ws["A1"].font = Font(size=16, bold=True)
 
     metrics = [
         ("", ""),
-        ("Key targets (based on June 2026 analysis)", ""),
-        ("Monthly salary", 158853),
-        ("Target living expenses", 53113),
-        ("Target investments", 55000),
-        ("Target family transfers", 18060),
-        ("Target projected surplus", 32780),
+        ("Income", ""),
+        ("Monthly salary (bank)", SALARY),
+        ("Pluxee groceries (₹4,400 + ₹1,200)", PLUXEE_GROCERIES),
+        ("Total monthly resources", SALARY + PLUXEE_GROCERIES),
         ("", ""),
-        ("Rules of thumb", ""),
-        ("Max restaurant spend", 3000),
-        ("Max luxury accrual", 2500),
-        ("Cooling-off period for purchases > ₹5,000", "7 days"),
-        ("Credit card bill cap", 8000),
+        ("Fixed outflows (from salary)", ""),
+        ("Zerodha investment", ZERODHA_TARGET),
+        ("Family transfers", 18000),
+        ("Credit card", 0),
+        ("", ""),
+        ("Living budget (from salary only)", ""),
+        ("Restaurants + street food + snacks", 5600),
+        ("Transport + subscriptions", 1700),
+        ("Healthcare + shopping + misc", 4500),
+        ("Groceries from salary", 0),
+        ("Total living from salary", SALARY_LIVING_TARGET),
+        ("", ""),
+        ("Projected salary surplus", SALARY_SURPLUS_TARGET),
+        ("Total wealth building (Zerodha + surplus)", ZERODHA_TARGET + SALARY_SURPLUS_TARGET),
+        ("Wealth rate (% of salary)", round((ZERODHA_TARGET + SALARY_SURPLUS_TARGET) / SALARY * 100, 1)),
+        ("", ""),
+        ("Rules", ""),
+        ("Transfer ₹1.2L to Zerodha", "1st–2nd of month"),
+        ("Use Pluxee for all groceries first", "DMart / BigBasket"),
+        ("Max restaurant spend", 2500),
+        ("Cooling-off for purchases > ₹5,000", "7 days"),
+        ("No credit card bills", "UPI/debit only"),
     ]
     for i, (label, value) in enumerate(metrics, start=2):
         ws.cell(row=i, column=1, value=label)
         ws.cell(row=i, column=2, value=value)
-        if isinstance(value, (int, float)) and value > 100:
+        if isinstance(value, (int, float)) and abs(value) > 100:
             ws.cell(row=i, column=2).number_format = '#,##0'
+        elif isinstance(value, float):
+            ws.cell(row=i, column=2).number_format = '0.0'
 
     auto_width(ws, 2)
+
+
+def build_monthly_plan_sheet(wb):
+    ws = wb.create_sheet("Monthly Plan")
+    ws["A1"] = "Next Month — Salary Allocation Plan"
+    ws["A1"].font = Font(size=14, bold=True)
+
+    plan = [
+        ("Step", "Action", "Amount (₹)", "When", "From"),
+        (1, "Transfer to Zerodha", ZERODHA_TARGET, "1st–2nd", "Salary"),
+        (2, "Family transfer (Somasundar etc.)", 18000, "1st week", "Salary"),
+        (3, "Load Pluxee — groceries", PLUXEE_GROCERIES, "Auto/credited", "Employer benefit"),
+        (4, "Restaurants (max 2 outings)", 2500, "Through month", "Salary"),
+        (5, "Office lunch / street food", 2500, "Through month", "Salary"),
+        (6, "Snacks + desserts + office cafe", 500, "Through month", "Salary"),
+        (7, "Metro transport", 200, "Through month", "Salary"),
+        (8, "Cursor AI + subscriptions", 1700, "Monthly", "Salary"),
+        (9, "Healthcare / pharmacy", 1500, "As needed", "Salary"),
+        (10, "Shopping (non-essential)", 1000, "As needed", "Salary"),
+        (11, "Misc / emergency buffer", 2000, "Reserve", "Salary"),
+        (12, "Groceries", 0, "Use Pluxee only", "Pluxee"),
+        ("", "SALARY OUTFLOW TOTAL", SALARY_OUTFLOW_TARGET, "", "Salary"),
+        ("", "PROJECTED SALARY SURPLUS", SALARY_SURPLUS_TARGET, "Keep in bank / sweep FD", "Salary"),
+        ("", "TOTAL WEALTH BUILDING", ZERODHA_TARGET + SALARY_SURPLUS_TARGET, "Zerodha + savings", ""),
+    ]
+    for row_idx, row_data in enumerate(plan, start=3):
+        for col_idx, val in enumerate(row_data, start=1):
+            cell = ws.cell(row=row_idx, column=col_idx, value=val)
+            cell.border = THIN_BORDER
+            if col_idx == 3 and isinstance(val, (int, float)) and val != "":
+                cell.number_format = '#,##0'
+            if row_idx == 3:
+                cell.fill = HEADER_FILL
+                cell.font = HEADER_FONT
+
+    auto_width(ws, 5)
 
 
 def main():
@@ -192,6 +264,7 @@ def main():
     build_log_sheet(wb)
     build_baseline_sheet(wb)
     build_dashboard_sheet(wb)
+    build_monthly_plan_sheet(wb)
     out = "/workspace/budget-tracker/monthly_budget_tracker.xlsx"
     wb.save(out)
     print(f"Created {out}")

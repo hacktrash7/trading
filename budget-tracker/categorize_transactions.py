@@ -41,11 +41,13 @@ RULES = [
 ]
 
 TARGETS = {
-    "Investments (Zerodha)": 55000,
-    "Family transfers": 18060,
-    "Credit card payment": 8000,
-    "Groceries": 2000,
-    "Restaurant dining": 3000,
+    "Investments (Zerodha)": 120000,
+    "Family transfers": 18000,
+    "Credit card payment": 0,
+    "Pluxee — groceries (benefit)": 5600,
+    "Groceries (from salary)": 0,
+    "Groceries": 0,
+    "Restaurant dining": 2500,
     "Street food / canteen": 2500,
     "Desserts (Polar Bear etc.)": 300,
     "Office snacks / tea": 300,
@@ -53,11 +55,11 @@ TARGETS = {
     "Transport (Metro)": 200,
     "Software subscriptions": 1500,
     "Other subscriptions": 200,
-    "Healthcare": 2500,
-    "Education / training": 2000,
+    "Healthcare": 1500,
+    "Education / training": 0,
     "Shopping (Amazon etc.)": 1000,
     "Gift cards": 0,
-    "Luxury / big purchases": 2500,
+    "Luxury / big purchases": 0,
     "Misc / buffer": 2000,
 }
 
