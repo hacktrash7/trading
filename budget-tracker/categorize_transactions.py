@@ -22,7 +22,8 @@ from pathlib import Path
 RULES = [
     (r"zerodha|indian cle|iccl", "Investments (Zerodha)"),
     (r"cc billpay|billpay|credit card", "Credit card payment"),
-    (r"somasundar|rajat agar|b t govind|govind", "Family transfers"),
+    (r"somasundar|somumaruti", "Rent (Somasundar)"),
+    (r"rajat agar|b t govind|govind", "Personal transfers"),
     (r"sparsh|hospital|medi|pharma", "Healthcare"),
     (r"centre for|course|training|udemy|coursera", "Education / training"),
     (r"dmart|avenue sup|bigbasket|innovative|grocer", "Groceries"),
@@ -42,7 +43,9 @@ RULES = [
 
 TARGETS = {
     "Investments (Zerodha)": 120000,
-    "Family transfers": 18000,
+    "Rent (Somasundar)": 16000,
+    "Personal transfers": 0,
+    "Family transfers": 0,
     "Credit card payment": 0,
     "Pluxee — groceries (benefit)": 5600,
     "Groceries (from salary)": 0,

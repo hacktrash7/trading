@@ -13,7 +13,8 @@ ZERODHA_TARGET = 120000
 
 BUDGET_CATEGORIES = [
     ("Investments (Zerodha)", 71000, ZERODHA_TARGET, "Transfer ₹1.2L to Zerodha on 1st–2nd of month"),
-    ("Family transfers", 18060, 18000, "Fixed obligation — budget as non-negotiable"),
+    ("Rent (Somasundar)", 16000, 16000, "Monthly rent — pay on 1st of month via UPI"),
+    ("Personal transfers", 2060, 0, "June: Rajat ₹1,100 + Govind ₹960 — budget only if recurring"),
     ("Credit card payment", 13180, 0, "No CC bills — pay everything via UPI/debit"),
     ("Pluxee — groceries (benefit)", 0, PLUXEE_GROCERIES, "₹4,400 + ₹1,200 loaded monthly; DMart/BigBasket only"),
     ("Groceries (from salary)", 2178, 0, "Use Pluxee first; salary only if Pluxee exhausted"),
@@ -34,7 +35,7 @@ BUDGET_CATEGORIES = [
 ]
 
 JUNE_TRANSACTIONS = [
-    ("01-Jun", "SOMASUNDAR", "Family transfers", 16000, "Debit"),
+    ("01-Jun", "SOMASUNDAR", "Rent (Somasundar)", 16000, "Debit"),
     ("01-Jun", "Sparsh Hospital", "Healthcare", 2290, "Debit"),
     ("01-Jun", "Zerodha (net)", "Investments (Zerodha)", 71000, "Debit"),
     ("01-Jun", "CC Bill Payment", "Credit card payment", 13180, "Debit"),
@@ -45,7 +46,7 @@ JUNE_TRANSACTIONS = [
     ("15-Jun", "Cursor AI", "Software subscriptions", 2376, "Debit"),
     ("17-Jun", "Amazon gift card", "Gift cards", 4240, "Debit"),
     ("21-Jun", "Chulha Cha", "Restaurant dining", 1180, "Debit"),
-    ("21-Jun", "Rajat Agarwal", "Family transfers", 1100, "Debit"),
+    ("21-Jun", "Rajat Agarwal", "Personal transfers", 1100, "Debit"),
     ("28-Jun", "Titan", "Luxury / big purchases", 30867, "Debit"),
     ("28-Jun", "Truffles", "Restaurant dining", 1155, "Debit"),
     ("28-Jun", "FGM", "Shopping (Amazon etc.)", 1502, "Debit"),
@@ -190,7 +191,8 @@ def build_dashboard_sheet(wb):
         ("", ""),
         ("Fixed outflows (from salary)", ""),
         ("Zerodha investment", ZERODHA_TARGET),
-        ("Family transfers", 18000),
+        ("Rent (Somasundar)", 16000),
+        ("Personal transfers", 0),
         ("Credit card", 0),
         ("", ""),
         ("Living budget (from salary only)", ""),
@@ -230,7 +232,7 @@ def build_monthly_plan_sheet(wb):
     plan = [
         ("Step", "Action", "Amount (₹)", "When", "From"),
         (1, "Transfer to Zerodha", ZERODHA_TARGET, "1st–2nd", "Salary"),
-        (2, "Family transfer (Somasundar etc.)", 18000, "1st week", "Salary"),
+        (2, "Rent — Somasundar", 16000, "1st of month", "Salary"),
         (3, "Load Pluxee — groceries", PLUXEE_GROCERIES, "Auto/credited", "Employer benefit"),
         (4, "Restaurants (max 2 outings)", 2500, "Through month", "Salary"),
         (5, "Office lunch / street food", 2500, "Through month", "Salary"),
