@@ -1,15 +1,12 @@
 #!/usr/bin/env python3
 """
-Categorize ICICI/UPI bank transactions and summarize spending by category.
+Categorize bank/UPI transactions and summarize spending by category.
 
 Usage (macOS — use python3, NOT python):
   python3 budget-tracker/categorize_transactions.py your_statement.csv
   ./budget-tracker/run_categorizer.sh your_statement.csv
 
-From the repo root (trading-cursor-monthly-budget-tracker-bd1b):
-  cd budget-tracker && python3 categorize_transactions.py ../your_statement.csv
-
-CSV should have columns for description and amount (header names are flexible).
+Never commit real bank CSV exports to a public repository.
 """
 
 import argparse
@@ -18,36 +15,45 @@ import re
 from collections import defaultdict
 from pathlib import Path
 
-# Mirrors budget tracker categories
+try:
+    from local_config import RENT_PATTERN  # type: ignore
+except ImportError:
+    RENT_PATTERN = r"rent|landlord|lease"
+
+# Generic merchant patterns only — no personal names or UPI handles
 RULES = [
-    (r"zerodha|indian cle|iccl", "Investments (Zerodha)"),
+    (r"zerodha|iccl|broking", "Investments (Zerodha)"),
     (r"cc billpay|billpay|credit card", "Credit card payment"),
-    (r"somasundar|somumaruti", "Rent (Somasundar)"),
-    (r"rajat agar|b t govind|govind", "Personal transfers"),
-    (r"sparsh|hospital|medi|pharma", "Healthcare"),
-    (r"centre for|course|training|udemy|coursera", "Education / training"),
-    (r"dmart|avenue sup|bigbasket|innovative|grocer", "Groceries"),
-    (r"munchzeste|chulha|truffles|tacobell|burger kin|tr enterpr|profile sa|restaurant", "Restaurant dining"),
-    (r"polar bear|dessert|ice cream", "Desserts (Polar Bear etc.)"),
-    (r"prakash|yeddula|swamy|najeeb|uttam saga|syed shabe|food corne|malnad|ali baba|muhammad|kanhu|manoj|abhishek|twisted|thatha tea|nexus|fgm|food", "Street food / canteen"),
-    (r"cowrks", "Office cafe (Cowrks)"),
+    (RENT_PATTERN, "Rent"),
+    (r"salary|neft.*salary|payroll", "Income"),
+    (r"int\.pd|interest", "Income"),
+    (r"hospital|clinic|pharma|medi", "Healthcare"),
+    (r"course|training|udemy|coursera", "Education / training"),
+    (r"dmart|avenue sup|bigbasket|grocery|supermarket|innovative", "Groceries"),
+    (r"restaurant|dine|bistro|cafe", "Restaurant dining"),
+    (r"dessert|ice cream", "Desserts"),
+    (r"canteen|food court|food", "Street food / canteen"),
     (r"cursor|github|copilot|software|adobe", "Software subscriptions"),
     (r"youtube|netflix|spotify|prime video|hotstar", "Other subscriptions"),
-    (r"bangalore metro|englishbmrc|bmrc", "Transport (Metro)"),
-    (r"titan|luxury|watch|jewel", "Luxury / big purchases"),
-    (r"amazon pay gift|gift card|giftc", "Gift cards"),
-    (r"amazon|flipkart|myntra|shopping", "Shopping (Amazon etc.)"),
-    (r"salary|johnson controls|neft.*salary", "Income"),
-    (r"int\.pd|interest", "Income"),
+    (r"metro|bmrc|transport", "Transport (Metro)"),
+    (r"luxury|watch|jewel|titan", "Luxury / big purchases"),
+    (r"gift card|giftc", "Gift cards"),
+    (r"amazon|flipkart|myntra|shopping", "Shopping (online)"),
 ]
 
+try:
+    from config import PLUXEE_GROCERIES, RENT_TARGET, ZERODHA_TARGET
+except ImportError:
+    PLUXEE_GROCERIES = 5000
+    RENT_TARGET = 15000
+    ZERODHA_TARGET = 100000
+
 TARGETS = {
-    "Investments (Zerodha)": 120000,
-    "Rent (Somasundar)": 16000,
+    "Investments (Zerodha)": ZERODHA_TARGET,
+    "Rent": RENT_TARGET,
     "Personal transfers": 0,
-    "Family transfers": 0,
     "Credit card payment": 0,
-    "Pluxee — groceries (benefit)": 5600,
+    "Pluxee — groceries (benefit)": PLUXEE_GROCERIES,
     "Groceries (from salary)": 0,
     "Groceries": 0,
     "Weekend expenses": 2000,
@@ -55,22 +61,22 @@ TARGETS = {
     "Restaurant dining": 500,
     "Street food / canteen (weekdays)": 2500,
     "Street food / canteen": 2500,
-    "Desserts (Polar Bear etc.)": 300,
+    "Desserts": 300,
     "Office snacks / tea": 300,
-    "Office cafe (Cowrks)": 200,
+    "Office cafe": 200,
     "Transport (Metro)": 200,
     "Software subscriptions": 1500,
     "Other subscriptions": 200,
     "Healthcare": 200,
     "Education / training": 0,
-    "Shopping (Amazon etc.)": 1000,
+    "Shopping (online)": 1000,
     "Gift cards": 0,
     "Luxury / big purchases": 0,
     "Misc / buffer": 2000,
 }
 
 
-def categorize(description: str) -> str:
+def categorize(description):
     text = description.lower()
     for pattern, category in RULES:
         if re.search(pattern, text):
@@ -78,7 +84,7 @@ def categorize(description: str) -> str:
     return "Misc / buffer"
 
 
-def parse_amount(raw: str):
+def parse_amount(raw):
     cleaned = re.sub(r"[₹,\s]", "", str(raw))
     try:
         return float(cleaned)
@@ -124,7 +130,8 @@ def print_summary(transactions):
     grand = sum(totals.values())
     print("\nSPENDING SUMMARY")
     print("=" * 72)
-    print(f"{'Category':<32} {'Actual':>10} {'Target':>10} {'Variance':>10}  Status")
+    print("{:<32} {:>10} {:>10} {:>10}  {}".format(
+        "Category", "Actual", "Target", "Variance", "Status"))
     print("-" * 72)
 
     for cat in sorted(totals, key=lambda c: -totals[c]):
@@ -132,16 +139,17 @@ def print_summary(transactions):
         target = TARGETS.get(cat, 0)
         variance = actual - target
         status = "OK" if variance <= 0 else "OVER"
-        print(f"{cat:<32} {actual:>10,.0f} {target:>10,.0f} {variance:>+10,.0f}  {status}")
+        print("{:<32} {:>10,.0f} {:>10,.0f} {:>+10,.0f}  {}".format(
+            cat, actual, target, variance, status))
 
     print("-" * 72)
-    print(f"{'TOTAL':<32} {grand:>10,.0f}")
-    print(f"\nTransactions analyzed: {len(transactions)}")
+    print("{:<32} {:>10,.0f}".format("TOTAL", grand))
+    print("\nTransactions analyzed: {}".format(len(transactions)))
 
 
 def main():
     parser = argparse.ArgumentParser(description="Categorize bank transactions")
-    parser.add_argument("csv_file", type=Path, help="Bank statement CSV export")
+    parser.add_argument("csv_file", type=Path, help="Bank statement CSV export (keep local, do not commit)")
     parser.add_argument("--month", help="Filter by month (YYYY-MM)")
     args = parser.parse_args()
 
@@ -151,7 +159,8 @@ def main():
             "Tips:\n"
             "  • Use the full path to your CSV, e.g. ~/Downloads/statement.csv\n"
             "  • From repo root: python3 budget-tracker/categorize_transactions.py your_statement.csv\n"
-            "  • On Mac, use python3 (not python — system python is 2.7)".format(args.csv_file)
+            "  • On Mac, use python3 (not python — system python is 2.7)\n"
+            "  • Never commit real bank CSVs to a public repo".format(args.csv_file)
         )
 
     txns = load_transactions(args.csv_file)

@@ -1,1 +1,7 @@
+local_config.py
 __pycache__/
+*.pyc
+.env
+*.csv
+!sample_statement.csv
+!transaction_log_template.csv
